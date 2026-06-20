@@ -1,0 +1,61 @@
+# Node / npm
+node_modules/
+npm-debug.log*
+yarn-error.log*
+.npm
+.pnp.*
+
+# Build outputs
+dist/
+build/
+.vite/
+
+# Laravel / PHP / Composer
+vendor/
+.phpunit.result.cache
+bootstrap/cache/*.php
+storage/*.key
+Homestead.json
+Homestead.yaml
+
+# Hardhat / Solidity
+artifacts/
+cache/
+typechain-types/
+coverage/
+coverage.json
+
+# Environment files (CRITICAL — never commit secrets)
+.env
+.env.*
+!.env.example
+!.env.*.example
+
+# OS files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Thumbs.db
+ehthumbs.db
+
+# IDE files
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Logs
+logs/
+*.log
+
+# Temporary files
+tmp/
+temp/
+*.tmp
