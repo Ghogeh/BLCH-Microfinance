@@ -1,0 +1,82 @@
+{
+  "project": "EDL — Entrepreneurial Decentralised Ledger",
+  "version": "1.0.0",
+  "dissertation": "Design and Evaluation of a Blockchain-Based Microfinance System for Unbanked Entrepreneurs",
+  "author": "Carl Ghogeh Vezhugho",
+  "institution": "University of Bamenda, NAHPI",
+
+  "actors": [
+    { "id": "A1", "name": "Entrepreneur", "alias": "Borrower", "role": "ENTREPRENEUR" },
+    { "id": "A2", "name": "Lender", "alias": "MFI/SACCO/Individual", "role": "LENDER" },
+    { "id": "A3", "name": "MFI Officer", "alias": "Officer", "role": "MFI_OFFICER" },
+    { "id": "A4", "name": "Regulator", "alias": "COBAC/BEAC", "role": "REGULATOR" },
+    { "id": "A5", "name": "Guarantor", "alias": "Peer Group Member", "role": "GUARANTOR" },
+    { "id": "A6", "name": "Admin", "alias": "Consortium Deployer", "role": "ADMIN" }
+  ],
+
+  "loanStates": ["OPEN", "FUNDING", "ACTIVE", "REPAID", "DEFAULTED"],
+
+  "smartContracts": [
+    {
+      "name": "IdentityRegistry",
+      "file": "contracts/src/IdentityRegistry.sol",
+      "purpose": "DID registration, KYC hash storage, blacklist management",
+      "functions": ["registerIdentity", "verifyIdentity", "rejectIdentity", "blacklistAddress", "isVerified"]
+    },
+    {
+      "name": "LoanFactory",
+      "file": "contracts/src/LoanFactory.sol",
+      "purpose": "Deploys new LoanContract instances; maintains loan registry",
+      "functions": ["createLoan", "getLoan", "getAllLoans"]
+    },
+    {
+      "name": "LoanContract",
+      "file": "contracts/src/LoanContract.sol",
+      "purpose": "Per-loan state machine; escrow; credit scoring; CEMAC compliance",
+      "functions": ["provideGuarantee", "fund", "repay", "checkDefault", "grantLenderAccess", "getRepaymentHistory", "triggerRegulatoryPenalty"]
+    }
+  ],
+
+  "apiEndpoints": [
+    { "method": "POST", "path": "/api/register", "controller": "AuthController@register", "role": "public" },
+    { "method": "POST", "path": "/api/login", "controller": "AuthController@login", "role": "public" },
+    { "method": "POST", "path": "/api/kyc/upload", "controller": "KYCController@upload", "role": "authenticated" },
+    { "method": "GET",  "path": "/api/loans", "controller": "LoanController@index", "role": "authenticated" },
+    { "method": "POST", "path": "/api/loans", "controller": "LoanController@store", "role": "ENTREPRENEUR" },
+    { "method": "GET",  "path": "/api/loans/{id}", "controller": "LoanController@show", "role": "authenticated" },
+    { "method": "POST", "path": "/api/loans/{id}/fund", "controller": "LoanController@fund", "role": "LENDER" },
+    { "method": "POST", "path": "/api/loans/{id}/repay", "controller": "LoanController@repay", "role": "ENTREPRENEUR" },
+    { "method": "POST", "path": "/api/loans/{id}/guarantee", "controller": "LoanController@guarantee", "role": "GUARANTOR" },
+    { "method": "POST", "path": "/api/loans/{id}/check-default", "controller": "LoanController@checkDefault", "role": "authenticated" },
+    { "method": "GET",  "path": "/api/loans/{id}/history", "controller": "LoanController@history", "role": "LENDER" },
+    { "method": "POST", "path": "/api/loans/{id}/grant-access", "controller": "LoanController@grantAccess", "role": "ENTREPRENEUR" },
+    { "method": "GET",  "path": "/api/users/me", "controller": "UserController@me", "role": "authenticated" },
+    { "method": "GET",  "path": "/api/users/me/credit-score", "controller": "CreditController@score", "role": "authenticated" },
+    { "method": "GET",  "path": "/api/borrowers/{wallet}/credit-passport", "controller": "CreditController@passport", "role": "LENDER" },
+    { "method": "GET",  "path": "/api/audit/loans", "controller": "AuditController@allLoans", "role": "REGULATOR" },
+    { "method": "GET",  "path": "/api/audit/verify-merkle/{block}", "controller": "AuditController@verifyMerkle", "role": "REGULATOR" },
+    { "method": "GET",  "path": "/api/blacklist", "controller": "AuditController@blacklist", "role": "REGULATOR" }
+  ],
+
+  "databaseTables": [
+    "users", "loans", "loan_guarantors", "loan_funders",
+    "repayments", "credit_scores", "kyc_documents",
+    "audit_log", "notifications", "blacklist",
+    "hash_integrity_log", "merkle_root_cache",
+    "transaction_performance_log", "privacy_audit_log",
+    "node_health_log", "gas_cost_log"
+  ],
+
+  "frontendPages": [
+    { "path": "/", "component": "LandingPage", "role": "public" },
+    { "path": "/register", "component": "RegisterPage", "role": "public" },
+    { "path": "/dashboard", "component": "BorrowerDashboard", "role": "ENTREPRENEUR" },
+    { "path": "/loans/new", "component": "LoanRequestPage", "role": "ENTREPRENEUR" },
+    { "path": "/loans/:id/repay", "component": "RepaymentPage", "role": "ENTREPRENEUR" },
+    { "path": "/lender", "component": "LenderDashboard", "role": "LENDER" },
+    { "path": "/officer", "component": "OfficerPanel", "role": "MFI_OFFICER" },
+    { "path": "/audit", "component": "AuditPortal", "role": "REGULATOR" },
+    { "path": "/loans/:id", "component": "LoanDetailView", "role": "authenticated" },
+    { "path": "/credit-passport/:wallet", "component": "CreditPassport", "role": "LENDER" }
+  ]
+}
