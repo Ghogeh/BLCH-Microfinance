@@ -19,33 +19,34 @@ return new class extends Migration
                   ->constrained('users')
                   ->onDelete('restrict');
 
-            // CFA equivalent of the repayment
-            $table->decimal('amount_cfa', 15, 2);
+            // Column names match Repayment model $fillable exactly
+            $table->decimal('amount_paid_cfa', 15, 2);
+            $table->string('amount_paid_wei', 78)->nullable();
 
-            // Exact on-chain msg.value in wei — uint256 from RepaymentMade event
-            $table->string('amount_wei', 78)->nullable();
+            // Balance remaining AFTER this payment
+            $table->decimal('remaining_after_cfa', 15, 2)->nullable();
 
-            // One row per on-chain transaction — unique enforces no double-counting
-            $table->string('tx_hash', 66)->unique()
-                  ->comment('On-chain tx of repay() call — unique per payment');
+            // nullable — seeder rows may not yet have an on-chain tx
+            $table->string('tx_hash', 66)->nullable()->unique()
+                  ->comment('On-chain tx of repay() — unique per confirmed payment');
 
-            $table->unsignedBigInteger('block_number');
+            $table->unsignedBigInteger('block_number')->nullable();
 
-            // How many days past due_date this payment was made
-            // 0 = on time, >0 = late, feeds into credit score formula
+            // When the repayment was confirmed on-chain (nullable for offline/test entries)
+            $table->timestamp('on_chain_timestamp')->nullable();
+
+            // Credit score inputs
+            $table->boolean('was_on_time')->default(true);
             $table->unsignedInteger('days_late')->default(0);
 
-            // Balance remaining AFTER this payment (mirrors remainingBalance on-chain)
-            $table->decimal('balance_after_cfa', 15, 2)->nullable();
-
-            // When the repayment was confirmed on-chain
-            $table->timestamp('repaid_at');
+            // Snapshot of borrower's reputation score after this repayment
+            $table->unsignedInteger('reputation_score_after')->nullable();
 
             $table->timestamps();
 
             $table->index('loan_id');
             $table->index('borrower_id');
-            $table->index('repaid_at');
+            $table->index('on_chain_timestamp');
         });
 
         // Repayments are on-chain facts — they cannot be altered off-chain

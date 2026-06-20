@@ -5,6 +5,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class AuditLog extends Model
 {
+    protected $table = 'audit_log'; // override: Laravel would guess 'audit_logs'
+
     public $timestamps = false;
     const CREATED_AT = 'created_at';
 
