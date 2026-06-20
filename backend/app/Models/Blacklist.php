@@ -5,6 +5,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class Blacklist extends Model
 {
+    protected $table = 'blacklist'; // override: Laravel would guess 'blacklists'
+
     protected $fillable = [
         'user_id', 'wallet_address', 'default_loan_id',
         'days_overdue', 'reason', 'blacklisted_at',

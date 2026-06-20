@@ -119,10 +119,30 @@ return new class extends Migration
             $table->index(['state', 'due_date']);
             $table->index(['borrower_id', 'state']);
         });
+
+        // NFR-002: enforce OPEN→FUNDING→ACTIVE→REPAID/DEFAULTED — no backward transitions
+        \DB::unprepared('
+            CREATE TRIGGER trg_loan_state_forward_only
+            BEFORE UPDATE ON loans
+            FOR EACH ROW
+            BEGIN
+                IF NOT (
+                    (OLD.state = "OPEN"      AND NEW.state IN ("OPEN","FUNDING","DEFAULTED")) OR
+                    (OLD.state = "FUNDING"   AND NEW.state IN ("FUNDING","ACTIVE","DEFAULTED")) OR
+                    (OLD.state = "ACTIVE"    AND NEW.state IN ("ACTIVE","REPAID","DEFAULTED")) OR
+                    (OLD.state = "REPAID"    AND NEW.state = "REPAID") OR
+                    (OLD.state = "DEFAULTED" AND NEW.state = "DEFAULTED")
+                ) THEN
+                    SIGNAL SQLSTATE "45000"
+                        SET MESSAGE_TEXT = "NFR-002: illegal loan state transition";
+                END IF;
+            END
+        ');
     }
 
     public function down(): void
     {
+        \DB::unprepared('DROP TRIGGER IF EXISTS trg_loan_state_forward_only');
         Schema::dropIfExists('loans');
     }
 };
