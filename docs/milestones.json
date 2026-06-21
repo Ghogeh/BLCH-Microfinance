@@ -1,0 +1,236 @@
+{
+  "project": "EDL Microfinance",
+  "lastUpdated": "2026-06-21",
+  "currentBranch": "develop",
+  "milestones": [
+    {
+      "id": "M1",
+      "name": "Project Initialization & Environment Setup",
+      "status": "complete",
+      "branch": null,
+      "dependsOn": [],
+      "estimatedDays": [3, 5],
+      "definitionOfDone": [
+        "Monorepo structure matches architecture doc",
+        "React, Laravel, Hardhat all run without errors",
+        "Ganache reachable and verified",
+        "Vite proxy reaches Laravel API"
+      ]
+    },
+    {
+      "id": "M2",
+      "name": "Smart Contract: IdentityRegistry.sol",
+      "status": "not_started",
+      "branch": "milestone/M2-identity-registry",
+      "dependsOn": ["M1"],
+      "estimatedDays": [5, 7],
+      "definitionOfDone": [
+        "Roles.sol defines all 6 role constants",
+        "EDLAccessControl.sol deployed, role assignment tested",
+        "IdentityRegistry.sol implements 5 core functions",
+        "Minimum 10 Hardhat tests passing",
+        "Test coverage >= 90%",
+        "Deployed to Ganache, address saved"
+      ],
+      "filesProduced": [
+        "contracts/src/access/Roles.sol",
+        "contracts/src/access/EDLAccessControl.sol",
+        "contracts/src/access/RBACModifiers.sol",
+        "contracts/src/IdentityRegistry.sol",
+        "contracts/test/IdentityRegistry.test.js"
+      ]
+    },
+    {
+      "id": "M3",
+      "name": "Smart Contracts: LoanFactory + LoanContract",
+      "status": "not_started",
+      "branch": "milestone/M3-loan-contracts",
+      "dependsOn": ["M2"],
+      "estimatedDays": [10, 14],
+      "definitionOfDone": [
+        "LoanFactory deploys LoanContract instances",
+        "All 7 LoanContract functions implemented",
+        "State machine guards prevent invalid transitions",
+        "ReentrancyGuard on fund() and repay()",
+        "CEMAC 90-day blacklist trigger tested",
+        "Minimum 20 Hardhat tests passing",
+        "Test coverage >= 90%",
+        "Deployed to Ganache, addresses saved"
+      ],
+      "filesProduced": [
+        "contracts/src/LoanFactory.sol",
+        "contracts/src/LoanContract.sol",
+        "contracts/test/LoanContract.test.js",
+        "contracts/test/LoanFactory.test.js"
+      ]
+    },
+    {
+      "id": "M4",
+      "name": "Database Migrations & Eloquent Models",
+      "status": "complete",
+      "branch": "milestone/M4-database",
+      "dependsOn": [],
+      "estimatedDays": [3, 4],
+      "definitionOfDone": [
+        "16 tables created",
+        "5 immutability triggers verified",
+        "10 Eloquent models with relationships",
+        "Seeders produce realistic data"
+      ]
+    },
+    {
+      "id": "M5",
+      "name": "Laravel Authentication & RBAC Middleware",
+      "status": "not_started",
+      "branch": "milestone/M5-laravel-auth",
+      "dependsOn": ["M4"],
+      "estimatedDays": [4, 5],
+      "definitionOfDone": [
+        "Registration + wallet-signature login working",
+        "Role middleware blocks unauthorized roles",
+        "GET /api/users/me returns profile",
+        "Minimum 8 PHPUnit tests passing"
+      ],
+      "filesProduced": [
+        "app/Http/Controllers/Auth/AuthController.php",
+        "app/Http/Middleware/CheckRole.php",
+        "tests/Feature/AuthTest.php"
+      ]
+    },
+    {
+      "id": "M6",
+      "name": "Backend API: KYC & Identity Endpoints",
+      "status": "not_started",
+      "branch": "milestone/M6-kyc-api",
+      "dependsOn": ["M5", "M2"],
+      "estimatedDays": [3, 4],
+      "definitionOfDone": [
+        "KYC upload stores encrypted doc + SHA-256",
+        "Hash matches between PHP and on-chain",
+        "BlockchainService calls registerIdentity()",
+        "Officer verify endpoint calls verifyIdentity()",
+        "Minimum 6 PHPUnit tests passing"
+      ]
+    },
+    {
+      "id": "M7",
+      "name": "Backend API: Loan Lifecycle Endpoints",
+      "status": "not_started",
+      "branch": "milestone/M7-loan-api",
+      "dependsOn": ["M6", "M3"],
+      "estimatedDays": [7, 10],
+      "definitionOfDone": [
+        "All 9 loan endpoints implemented",
+        "Every endpoint calls correct contract function",
+        "Off-chain MySQL matches on-chain state",
+        "Role-based authorization enforced",
+        "Minimum 15 PHPUnit tests passing"
+      ]
+    },
+    {
+      "id": "M8",
+      "name": "Blockchain Event Listener Service",
+      "status": "not_started",
+      "branch": "milestone/M8-event-listener",
+      "dependsOn": ["M7"],
+      "estimatedDays": [4, 5],
+      "definitionOfDone": [
+        "Listener catches all 6 event types",
+        "Each event syncs correct MySQL table",
+        "audit_log entry per event",
+        "Listener recovers after restart"
+      ]
+    },
+    {
+      "id": "M9",
+      "name": "Frontend: Wallet Connection & Auth",
+      "status": "not_started",
+      "branch": "milestone/M9-frontend-auth",
+      "dependsOn": ["M5"],
+      "estimatedDays": [3, 4],
+      "definitionOfDone": [
+        "useWallet hook connects MetaMask",
+        "WalletContext + AuthContext working",
+        "Role-based route guards working",
+        "Vitest tests passing"
+      ]
+    },
+    {
+      "id": "M10",
+      "name": "Frontend: Borrower Dashboard & Loan Request",
+      "status": "not_started",
+      "branch": "milestone/M10-borrower-ui",
+      "dependsOn": ["M9", "M7"],
+      "estimatedDays": [5, 7],
+      "definitionOfDone": [
+        "BorrowerDashboard with score gauge + loan card",
+        "LoanRequestPage submits via MetaMask",
+        "RepaymentPage with live balance update",
+        "Responsive on 375px viewport"
+      ]
+    },
+    {
+      "id": "M11",
+      "name": "Frontend: Lender & Officer Dashboards",
+      "status": "not_started",
+      "branch": "milestone/M11-lender-officer-ui",
+      "dependsOn": ["M9", "M7"],
+      "estimatedDays": [5, 7],
+      "definitionOfDone": [
+        "LenderDashboard shows fundable loans",
+        "FundButton executes fund() correctly",
+        "OfficerPanel KYC queue working",
+        "CreditPassport with consent flow"
+      ]
+    },
+    {
+      "id": "M12",
+      "name": "Frontend: Regulator Audit Portal",
+      "status": "not_started",
+      "branch": "milestone/M12-audit-portal",
+      "dependsOn": ["M9", "M8"],
+      "estimatedDays": [3, 4],
+      "definitionOfDone": [
+        "AuditPortal lists all loans, no consent gating",
+        "MerkleVerifier shows verification result",
+        "BlacklistManager shows CEMAC status"
+      ]
+    },
+    {
+      "id": "M13",
+      "name": "Integration Testing & Bug Fixes",
+      "status": "not_started",
+      "branch": "milestone/M13-integration-tests",
+      "dependsOn": ["M2","M3","M4","M5","M6","M7","M8","M9","M10","M11","M12"],
+      "estimatedDays": [5, 7],
+      "definitionOfDone": [
+        "All 5 dissertation scenarios pass end-to-end",
+        "Playwright E2E suite covers borrower journey",
+        "No console errors in any user flow",
+        "50 concurrent loan creations succeed"
+      ]
+    },
+    {
+      "id": "M14",
+      "name": "Deployment (Docker + Documentation)",
+      "status": "not_started",
+      "branch": "milestone/M14-deployment",
+      "dependsOn": ["M13"],
+      "estimatedDays": [3, 5],
+      "definitionOfDone": [
+        "docker-compose.yml runs all services",
+        "Hardhat deploys to Besu testnet",
+        "DEPLOYMENT.md walks through fresh setup",
+        "Final evaluation report generated"
+      ]
+    }
+  ],
+  "parallelSafePairs": [
+    ["M2", "M5"],
+    ["M9", "M6"]
+  ],
+  "neverRunInParallel": [
+    ["M3", "M7"],
+    ["M7", "M8"]
+  ]
+}
