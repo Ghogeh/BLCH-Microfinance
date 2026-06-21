@@ -306,3 +306,19 @@ M1 → M2 → M3 → M6 → M7 → M8 → M9 → M10 → M13 → M14
 
 **Two milestones complete. Next to start: M2 (IdentityRegistry) and M5
 (Laravel Auth) — these can begin in parallel immediately.**
+
+---
+
+## Multi-agent parallelism notes
+
+M4 (database) can run in parallel with M2/M3 (smart contracts) — this
+is why we did Phase 5 before formalizing this roadmap. M9 (frontend auth)
+can also start as soon as M5 is done, in parallel with M6/M7/M8.
+
+**If working with two AI agent sessions simultaneously**, the safe parallel
+pairs are:
+- Agent A: M2 → M3 (smart contracts)
+- Agent B: M5 → M6 (backend, once M4 done)
+
+Never run two agents on M3 and M7 simultaneously — M7 depends on M3's
+contract addresses being finalized.
