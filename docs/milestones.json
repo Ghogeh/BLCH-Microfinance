@@ -1,6 +1,6 @@
 {
   "project": "EDL Microfinance",
-  "lastUpdated": "2026-06-23",
+  "lastUpdated": "2026-06-23T03:17:18Z",
   "currentBranch": "develop",
   "milestones": [
     {
@@ -43,7 +43,7 @@
     {
       "id": "M3",
       "name": "Smart Contracts: LoanFactory + LoanContract",
-      "status": "not_started",
+      "status": "complete",
       "branch": "milestone/M3-loan-contracts",
       "dependsOn": ["M2"],
       "estimatedDays": [10, 14],
