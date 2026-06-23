@@ -32,5 +32,11 @@ module.exports = {
     tests:     "./test",
     cache:     "./cache",
     artifacts: "./artifacts"
+  },
+  gasReporter: {
+    enabled:    true,
+    currency:   "USD",
+    outputFile: "gas-report.txt",
+    noColors:   true,
   }
 };
