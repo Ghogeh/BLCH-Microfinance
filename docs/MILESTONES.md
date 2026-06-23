@@ -24,7 +24,7 @@ all running and verified to communicate.
 ---
 
 ## M2 — Smart Contract: IdentityRegistry.sol
-**Status:** ⬜ Not started
+**Status:** ✅ Complete (2026-06-23)
 **Branch:** milestone/M2-identity-registry
 **Estimated effort:** 5–7 days
 **Dependencies:** M1
@@ -33,15 +33,15 @@ all running and verified to communicate.
 RBAC foundation (Roles.sol, EDLAccessControl.sol, RBACModifiers.sol).
 
 **Definition of Done:**
-- [ ] Roles.sol defines all 6 role constants
-- [ ] EDLAccessControl.sol deployed and role assignment tested
-- [ ] IdentityRegistry.sol implements registerIdentity, verifyIdentity,
+- [x] Roles.sol defines all 6 role constants
+- [x] EDLAccessControl.sol deployed and role assignment tested
+- [x] IdentityRegistry.sol implements registerIdentity, verifyIdentity,
       rejectIdentity, blacklistAddress, isVerified
-- [ ] Minimum 10 Hardhat test cases passing (npx hardhat test)
-- [ ] Test coverage ≥ 90% on IdentityRegistry.sol (npx hardhat coverage)
-- [ ] Contract deployed to Ganache via scripts/deploy.js
-- [ ] Deployed address saved to contracts/deployments/ganache-latest.json
-- [ ] No compiler warnings on `npx hardhat compile`
+- [x] Minimum 10 Hardhat test cases passing (npx hardhat test) — 46 passing
+- [x] Test coverage ≥ 90% on IdentityRegistry.sol — 100% stmts/funcs/lines, 92.86% branch
+- [x] Contract deployed to Ganache via scripts/deploy.js
+- [x] Deployed address saved to contracts/deployments/ganache-latest.json
+- [x] No compiler warnings on `npx hardhat compile`
 
 ---
 

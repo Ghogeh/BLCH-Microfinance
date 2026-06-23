@@ -101,3 +101,62 @@
   contracts) and M6 (KYC API), so it is the highest-priority next step
 
 ---
+
+## 2026-06-23 — M2 — Agent used: Claude Sonnet 4.6
+
+**Branch:** milestone/M2-identity-registry
+**Status change:** not_started → complete
+
+### What was done
+- Resolved a circular import risk in the original RBAC design by making
+  IdentityRegistry.sol fully self-contained (no dependency on
+  EDLAccessControl or RBACModifiers)
+- Implemented Roles.sol — 6 bytes32 constants as keccak256 hashes (library, zero gas overhead)
+- Implemented IdentityRegistry.sol with registerIdentity, verifyIdentity,
+  rejectIdentity, blacklistAddress, unblacklistAddress, isVerified, getIdentity
+- Implemented EDLAccessControl.sol with role assignment, regulator KYC
+  exemption, and hasValidRole() combined check
+- Implemented RBACModifiers.sol with 7 modifiers covering all 6 actor
+  roles plus a consortium-wide check
+- Built RBACTestHarness.sol (in src/test-helpers/) to enable testing of abstract modifiers
+- Wrote 46 total Hardhat test cases across 3 test files (IdentityRegistry, EDLAccessControl, RBACModifiers)
+- Achieved 100% stmt/func/line coverage on IdentityRegistry.sol (92.86% branch)
+- Deployed both contracts to Ganache, addresses saved to
+  contracts/deployments/ganache-latest.json
+- Removed EDLPlaceholder.sol and its deploy script (no longer needed)
+
+### Decisions made
+- IdentityRegistry uses its own lightweight isOfficer mapping rather
+  than depending on EDLAccessControl, to break what would otherwise be
+  a circular dependency (EDLAccessControl needs IdentityRegistry to
+  check KYC status; IdentityRegistry cannot also depend on
+  EDLAccessControl to check roles)
+- Added an authorizedContracts mapping to IdentityRegistry specifically
+  so LoanContract (Phase 8) can call blacklistAddress() automatically
+  on 90-day default, without needing to be the human owner
+- RBACTestHarness.sol placed in src/test-helpers/ (not test/helpers/) because
+  Hardhat's paths.sources only scans one directory; the src/ path is the
+  configured compilation root
+
+### Blockers encountered
+- HH700: Artifact for contract "RBACTestHarness" not found — Fix: moved
+  harness from test/helpers/ into src/test-helpers/ to be within Hardhat's
+  sources path
+- HH1006 when sources set to "." — Fix: reverted to sources="./src" and
+  moved harness into src/ instead
+- EDLAccessControl.RoleRevoked name collision with OZ's AccessControl.RoleRevoked
+  — Fix: replaced .to.emit().withArgs() with manual receipt log parsing
+- isVerified() combined check caused wrong expected revert message in blacklist
+  test — Fix: updated test to match actual revert (KYC check fires first since
+  isVerified returns false for blacklisted wallets)
+
+### Tests status
+- 46/46 tests passing
+- IdentityRegistry.sol: 100% stmts, 92.86% branch, 100% funcs, 100% lines
+
+### Next session should start with
+- Begin M3 — LoanFactory.sol and LoanContract.sol — on a new branch
+  milestone/M3-loan-contracts, branched from develop after this
+  milestone is merged
+
+---

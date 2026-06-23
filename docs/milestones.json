@@ -1,6 +1,6 @@
 {
   "project": "EDL Microfinance",
-  "lastUpdated": "2026-06-21",
+  "lastUpdated": "2026-06-23",
   "currentBranch": "develop",
   "milestones": [
     {
@@ -20,7 +20,7 @@
     {
       "id": "M2",
       "name": "Smart Contract: IdentityRegistry.sol",
-      "status": "not_started",
+      "status": "complete",
       "branch": "milestone/M2-identity-registry",
       "dependsOn": ["M1"],
       "estimatedDays": [5, 7],
