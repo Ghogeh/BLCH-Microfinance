@@ -1,0 +1,11 @@
+{
+  "network": "ganache",
+  "chainId": 1337,
+  "deployedAt": "2026-06-23T01:05:45.220Z",
+  "deployer": "0x90F8bf6A479f320ead074411a4B0e7944Ea8c9C1",
+  "milestone": "M2",
+  "contracts": {
+    "IdentityRegistry": "0xCfEB869F69431e42cdB54A4F4f105C19C080A601",
+    "EDLAccessControl": "0x254dffcd3277C0b1660F6d42EFbB754edaBAbC2B"
+  }
+}
