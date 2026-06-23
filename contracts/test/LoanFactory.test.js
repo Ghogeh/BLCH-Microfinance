@@ -101,6 +101,14 @@ describe("LoanFactory", function () {
       ).to.be.revertedWith("LoanFactory: loan amount must be > 0");
     });
 
+    it("reverts if duration is zero", async function () {
+      const { factory, borrower, LOAN_AMOUNT, INTEREST_BPS } =
+        await loadFixture(deployFixture);
+      await expect(
+        factory.connect(borrower).createLoan(LOAN_AMOUNT, 0, INTEREST_BPS)
+      ).to.be.revertedWith("LoanFactory: duration must be > 0");
+    });
+
     it("reverts if interest rate exceeds 30%", async function () {
       const { factory, borrower, LOAN_AMOUNT, DURATION_DAYS } =
         await loadFixture(deployFixture);

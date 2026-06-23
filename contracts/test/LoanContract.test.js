@@ -562,4 +562,102 @@ describe("LoanContract", function () {
         .to.be.revertedWith("RBACModifiers: caller does not hold ADMIN role");
     });
   });
+
+  // ── Coverage gap: triggerRegulatoryPenalty (lines 365–367) ───────────────
+
+  describe("triggerRegulatoryPenalty — regulator manual CEMAC action", function () {
+    it("regulator can manually trigger penalty on an ACTIVE loan", async function () {
+      const f    = await loadFixture(baseFixture);
+      const base = await loanInActive(f);
+
+      await expect(
+        base.loan.connect(f.regulator)
+          .triggerRegulatoryPenalty("COBAC manual enforcement")
+      ).to.emit(base.loan, "RegulatoryPenaltyTriggered")
+       .withArgs(f.borrower.address, "COBAC manual enforcement");
+
+      expect(await base.loan.getLoanState()).to.equal(4); // DEFAULTED
+    });
+
+    it("triggerRegulatoryPenalty also blacklists the borrower via factory", async function () {
+      const f    = await loadFixture(baseFixture);
+      const base = await loanInActive(f);
+
+      await base.loan.connect(f.regulator)
+        .triggerRegulatoryPenalty("COBAC enforcement");
+
+      expect(await f.registry.blacklisted(f.borrower.address)).to.equal(true);
+    });
+
+    it("non-regulator cannot call triggerRegulatoryPenalty", async function () {
+      const f    = await loadFixture(baseFixture);
+      const base = await loanInActive(f);
+
+      await expect(
+        base.loan.connect(f.stranger)
+          .triggerRegulatoryPenalty("attempt")
+      ).to.be.revertedWith("RBACModifiers: caller does not hold REGULATOR role");
+    });
+  });
+
+  // ── Coverage gap: hasLenderAccess view (line 381) ─────────────────────────
+
+  describe("hasLenderAccess view function", function () {
+    it("returns false before consent is granted", async function () {
+      const f    = await loadFixture(baseFixture);
+      const base = await loanInActive(f);
+      expect(await base.loan.hasLenderAccess(f.lender.address)).to.equal(false);
+    });
+
+    it("returns true after borrower grants consent", async function () {
+      const f    = await loadFixture(baseFixture);
+      const base = await loanInActive(f);
+      await base.loan.connect(f.borrower).grantLenderAccess(f.lender.address);
+      expect(await base.loan.hasLenderAccess(f.lender.address)).to.equal(true);
+    });
+
+    it("returns false after consent is revoked", async function () {
+      const f    = await loadFixture(baseFixture);
+      const base = await loanInActive(f);
+      await base.loan.connect(f.borrower).grantLenderAccess(f.lender.address);
+      await base.loan.connect(f.borrower).revokeLenderAccess(f.lender.address);
+      expect(await base.loan.hasLenderAccess(f.lender.address)).to.equal(false);
+    });
+  });
+
+  // ── Coverage gap: _countOnTimePayments late-payment branch ────────────────
+
+  describe("Credit score — late payment branch", function () {
+    it("reputationScore reflects lower timeliness when repayment is made after due date", async function () {
+      const f    = await loadFixture(baseFixture);
+      const base = await loanInActive(f);
+
+      // Advance past the 30-day due date — payment is now late
+      await time.increase(31 * 24 * 60 * 60);
+
+      // Pay partial amount after due date (this exercises the late-payment branch
+      // in _countOnTimePayments where timestamp > dueDate)
+      await base.loan.connect(f.borrower)
+        .repay({ value: ethers.parseEther("0.5") });
+
+      // Score should still update but be lower than on-time equivalent
+      // (timeliness component = 0 since 0 payments were on-time)
+      const score = await base.loan.reputationScore();
+      // Base 10 + timeliness 0 (0/1 on time) + volume ~13 (0.5/1.1 * 30 ≈ 13)
+      expect(score).to.be.lessThan(50); // below initial base of 50
+      expect(score).to.be.greaterThan(0);
+    });
+  });
+
+  // ── Coverage gap: getGuarantors view ─────────────────────────────────────
+
+  describe("getGuarantors view function", function () {
+    it("returns the list of guarantors after guarantee is provided", async function () {
+      const f    = await loadFixture(baseFixture);
+      const base = await loanInFunding(f); // guarantor has already provided guarantee
+      const guarantors = await base.loan.getGuarantors();
+      expect(guarantors.length).to.equal(1);
+      expect(guarantors[0]).to.equal(f.guarantor.address);
+    });
+  });
 });
