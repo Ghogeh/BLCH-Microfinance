@@ -7,7 +7,7 @@ const PRIVATE_KEY = process.env.ADMIN_PRIVATE_KEY ||
 
 module.exports = {
   solidity: {
-    version: "0.8.20",
+    version: "0.8.24", // bumped from 0.8.20 — OZ v5 Strings.sol requires ^0.8.24
     settings: {
       optimizer: {
         enabled: true,
@@ -32,5 +32,11 @@ module.exports = {
     tests:     "./test",
     cache:     "./cache",
     artifacts: "./artifacts"
+  },
+  gasReporter: {
+    enabled:    true,
+    currency:   "USD",
+    outputFile: "gas-report.txt",
+    noColors:   true,
   }
 };
