@@ -2,44 +2,40 @@
 
 namespace Database\Factories;
 
-use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 
-/**
- * @extends Factory<User>
- */
 class UserFactory extends Factory
 {
-    /**
-     * The current password being used by the factory.
-     */
-    protected static ?string $password;
-
-    /**
-     * Define the model's default state.
-     *
-     * @return array<string, mixed>
-     */
     public function definition(): array
     {
+        static $counter = 0;
+        $counter++;
         return [
-            'name' => fake()->name(),
-            'email' => fake()->unique()->safeEmail(),
-            'email_verified_at' => now(),
-            'password' => static::$password ??= Hash::make('password'),
-            'remember_token' => Str::random(10),
+            'wallet_address'   => '0x' . str_pad(dechex($counter), 40, '0', STR_PAD_LEFT),
+            'role'             => 'entrepreneur',
+            'name'             => $this->faker->name(),
+            'email'            => $this->faker->unique()->safeEmail(),
+            'phone'            => $this->faker->phoneNumber(),
+            'kyc_status'       => 'pending',
+            'blacklisted'      => false,
+            'institution_name' => null,
         ];
     }
 
-    /**
-     * Indicate that the model's email address should be unverified.
-     */
-    public function unverified(): static
-    {
-        return $this->state(fn (array $attributes) => [
-            'email_verified_at' => null,
-        ]);
+    public function verified(): static {
+        return $this->state(fn () => ['kyc_status' => 'verified']);
+    }
+
+    public function lender(): static {
+        return $this->state(fn () => ['role' => 'lender', 'kyc_status' => 'verified']);
+    }
+
+    public function officer(): static {
+        return $this->state(fn () => ['role' => 'officer', 'kyc_status' => 'verified']);
+    }
+
+    public function blacklisted(): static {
+        return $this->state(fn () => ['blacklisted' => true]);
     }
 }

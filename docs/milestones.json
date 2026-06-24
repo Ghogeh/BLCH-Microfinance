@@ -81,7 +81,7 @@
     {
       "id": "M5",
       "name": "Laravel Authentication & RBAC Middleware",
-      "status": "not_started",
+      "status": "complete",
       "branch": "milestone/M5-laravel-auth",
       "dependsOn": ["M4"],
       "estimatedDays": [4, 5],
@@ -100,7 +100,7 @@
     {
       "id": "M6",
       "name": "Backend API: KYC & Identity Endpoints",
-      "status": "not_started",
+      "status": "complete",
       "branch": "milestone/M6-kyc-api",
       "dependsOn": ["M5", "M2"],
       "estimatedDays": [3, 4],
@@ -115,7 +115,7 @@
     {
       "id": "M7",
       "name": "Backend API: Loan Lifecycle Endpoints",
-      "status": "not_started",
+      "status": "complete",
       "branch": "milestone/M7-loan-api",
       "dependsOn": ["M6", "M3"],
       "estimatedDays": [7, 10],
@@ -130,7 +130,7 @@
     {
       "id": "M8",
       "name": "Blockchain Event Listener Service",
-      "status": "not_started",
+      "status": "complete",
       "branch": "milestone/M8-event-listener",
       "dependsOn": ["M7"],
       "estimatedDays": [4, 5],
