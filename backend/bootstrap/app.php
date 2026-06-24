@@ -18,6 +18,10 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->redirectGuestsTo(
             fn (Request $request) => $request->is('api/*') ? null : route('login')
         );
+        $middleware->alias([
+            'role'         => \App\Http\Middleware\CheckRole::class,
+            'kyc_verified' => \App\Http\Middleware\KYCVerified::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(
