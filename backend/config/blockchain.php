@@ -15,22 +15,25 @@ return [
         'loan_factory'       => env('LOAN_FACTORY_ADDRESS'),
     ],
 
-    // Event signature hashes (keccak256 of event signatures)
-    // Used by the M8 event listener to filter logs
-    // NOTE: Ethereum uses Keccak-256 (pre-NIST), not SHA3-256.
-    // These are computed correctly at runtime via kornrunner\Keccak::hash().
-    // The values here are placeholders; use BlockchainService::encodeSelector()
-    // to compute the correct hashes at runtime.
-    'event_signatures' => [
-        'IdentityRegistered'   => env('EVENT_SIG_IDENTITY_REGISTERED'),
-        'IdentityVerified'     => env('EVENT_SIG_IDENTITY_VERIFIED'),
-        'LoanContractDeployed' => env('EVENT_SIG_LOAN_DEPLOYED'),
-        'Funded'               => env('EVENT_SIG_FUNDED'),
-        'LoanDisbursed'        => env('EVENT_SIG_DISBURSED'),
-        'RepaymentMade'        => env('EVENT_SIG_REPAYMENT'),
-        'DefaultDeclared'      => env('EVENT_SIG_DEFAULT'),
-        'AddressBlacklisted'   => env('EVENT_SIG_BLACKLISTED'),
-    ],
+    // Event signature hashes — computed at runtime using Keccak-256.
+    // Ethereum uses the original Keccak standard (NOT NIST SHA3-256).
+    // These topic hashes are used by the M8 event listener to filter eth_getLogs.
+    'event_signatures' => (function () {
+        if (!class_exists(\kornrunner\Keccak::class)) {
+            return [];
+        }
+        $k = fn (string $sig) => '0x' . \kornrunner\Keccak::hash($sig, 256);
+        return [
+            'IdentityRegistered'   => $k('IdentityRegistered(address,bytes32,string)'),
+            'IdentityVerified'     => $k('IdentityVerified(address,address)'),
+            'LoanContractDeployed' => $k('LoanContractDeployed(address,address,uint256,uint256,uint256)'),
+            'Funded'               => $k('Funded(address,uint256,uint256)'),
+            'LoanDisbursed'        => $k('LoanDisbursed(address,uint256)'),
+            'RepaymentMade'        => $k('RepaymentMade(address,uint256,uint256)'),
+            'DefaultDeclared'      => $k('DefaultDeclared(address,uint256)'),
+            'AddressBlacklisted'   => $k('AddressBlacklisted(address,string)'),
+        ];
+    })(),
 
     // Block scanning interval for event listener (seconds between polls)
     'poll_interval_seconds' => env('BLOCKCHAIN_POLL_INTERVAL', 2),

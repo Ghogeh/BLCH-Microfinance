@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Services\BlockchainService;
+use App\Services\BlockchainEventListenerService;
 use App\Services\IdentityRegistryService;
 use App\Services\KYCService;
 use App\Services\LoanFactoryService;
@@ -16,5 +17,6 @@ class EDLServiceProvider extends ServiceProvider
         $this->app->singleton(IdentityRegistryService::class);
         $this->app->singleton(KYCService::class);
         $this->app->singleton(LoanFactoryService::class);
+        $this->app->singleton(BlockchainEventListenerService::class);
     }
 }
