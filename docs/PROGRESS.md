@@ -223,3 +223,48 @@
   LOAN_FACTORY_ADDRESS=0xC89Ce4735882C9F0f0FE26686c53074E09B0D550
 
 ---
+
+## 2026-06-24 — M5/M6/M7/M8 — Agent used: Claude Sonnet 4.6
+
+**Branch:** milestone/M5-laravel-auth (all 4 milestones on this branch)
+**Status change:** not_started → complete (M5, M6, M7, M8)
+
+### What was done
+- Built BlockchainService: JSON-RPC transport layer (rpc, call, sendTransaction, sendAndWait, getLogs, ABI encode/decode helpers)
+- Built IdentityRegistryService: domain wrapper for IdentityRegistry.sol (isVerified, isBlacklisted, registerIdentity, verifyIdentity, rejectIdentity)
+- Built wallet-signature authentication: GET /api/auth/nonce → POST /api/auth/verify (MetaMask personal_sign + ecrecover via elliptic-php)
+- Built CheckRole middleware: blocks by role ENUM, also catches blacklisted users
+- Built KYCVerified middleware: blocks unverified users from loan endpoints
+- Built KYCService: SHA-256 off-chain hashing + AES-256 encrypted document storage
+- Built KYCController: upload, status, officer verify/reject (5 endpoints)
+- Built LoanFactoryService: createLoan, fund, repay, checkDefault, grantLenderAccess, revokeLenderAccess, getLoanState (all with correct keccak256 selectors)
+- Built LoanController: all 9 loan lifecycle endpoints with on-chain sync + role guards
+- Built BlockchainEventListenerService: polling loop, missed-block recovery, idempotent dispatch
+- Built ProcessBlockchainEvent queue job: 7 event handlers (LoanDeployed, Funded, Disbursed, Repayment, Default, Blacklist, Identity)
+- Built edl:listen artisan command
+- 11/11 PHPUnit auth tests passing
+
+### Decisions made
+- LoanConsent table added (not in original Phase 5 schema) to track borrower consent for lender history access in MySQL, synced from LenderAccessGranted on-chain event
+- Wallet nonces stored in MySQL not Redis — auth nonces benefit from being in the DB where they survive Redis flushes
+- Event listener dispatches jobs rather than processing inline — decouples polling speed from MySQL write speed; jobs auto-retry on failure
+- Event signatures computed via kornrunner\Keccak::hash() at config runtime — prevents the SHA3-256 vs Keccak-256 algorithm confusion
+
+### Blockers encountered
+- kornrunner/ethereum-offline-raw-tx requires ext-gmp (not in PHP 8.5.1 build) — Fix: installed with --ignore-platform-req=ext-gmp; gmp only needed for offline signing, not our use case
+- simplito/elliptic-php not a transitive dep — Fix: installed explicitly for ecrecover
+- All function selectors in spec were wrong (wrong keccak256 values) — Fix: computed correct values using kornrunner\Keccak::hash() before writing any service code (5 in IdentityRegistryService, 7 in LoanFactoryService)
+- hash('keccak256', ...) is not a valid PHP hash algorithm — Fix: replaced with keccak256() helper using kornrunner\Keccak
+- PHPUnit SQLite driver missing in PHP 8.5.1 — Fix: configured phpunit.xml to use MySQL with edl_db_test database
+- Sanctum statefulApi() causes session persistence in tests, making logout test fail via HTTP — Fix: asserted token deleted from DB instead of via HTTP 401
+
+### Tests status
+- 11/11 PHPUnit auth tests passing
+- KYC and loan endpoints require live Ganache for full integration tests
+
+### Next session should start with
+- Begin M9 (frontend wallet connection + auth) on a new branch milestone/M9-frontend-auth
+- M9 depends on M5 (auth endpoints now complete) ✓
+- The VITE_API_URL, VITE_LOAN_FACTORY_ADDRESS, and VITE_IDENTITY_REGISTRY_ADDRESS in frontend/.env must be set from contracts/deployments/ganache-latest.json before starting M9
+
+---
