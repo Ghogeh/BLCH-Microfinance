@@ -1,122 +1,113 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+import { Routes, Route, Navigate } from 'react-router-dom'
+import { lazy, Suspense } from 'react'
+import RequireAuth from './components/auth/RequireAuth'
+import RequireRole from './components/auth/RequireRole'
+import RequireKYC  from './components/auth/RequireKYC'
 
-function App() {
-  const [count, setCount] = useState(0)
+const LoginPage         = lazy(() => import('./pages/Auth/LoginPage'))
+const RegisterPage      = lazy(() => import('./pages/Auth/RegisterPage'))
+const KYCPage           = lazy(() => import('./pages/Auth/KYCPage'))
+const BorrowerDashboard = lazy(() => import('./pages/Dashboard/BorrowerDashboard'))
+const LoanRequestPage   = lazy(() => import('./pages/Loan/LoanRequestPage'))
+const LoanDetailPage    = lazy(() => import('./pages/Loan/LoanDetailPage'))
+const RepaymentPage     = lazy(() => import('./pages/Loan/RepaymentPage'))
+const LenderDashboard   = lazy(() => import('./pages/Lender/LenderDashboard'))
+const OfficerPanel      = lazy(() => import('./pages/Officer/OfficerPanel'))
+const AuditPortal       = lazy(() => import('./pages/Audit/AuditPortal'))
+const CreditPassport    = lazy(() => import('./pages/Credit/CreditPassport'))
 
+const PageLoader = () => (
+  <div className="flex items-center justify-center min-h-screen bg-slate-950">
+    <div className="text-center">
+      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-500 mx-auto mb-4" />
+      <p className="text-sm text-slate-400">Loading EDL…</p>
+    </div>
+  </div>
+)
+
+export default function App() {
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+    <Suspense fallback={<PageLoader />}>
+      <Routes>
+        {/* Public */}
+        <Route path="/login"    element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
 
-      <div className="ticks"></div>
+        {/* KYC upload — auth required, KYC not yet required */}
+        <Route path="/kyc" element={
+          <RequireAuth><KYCPage /></RequireAuth>
+        } />
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
+        {/* Entrepreneur */}
+        <Route path="/dashboard" element={
+          <RequireAuth>
+            <RequireRole role="entrepreneur">
+              <BorrowerDashboard />
+            </RequireRole>
+          </RequireAuth>
+        } />
+        <Route path="/loans/new" element={
+          <RequireAuth>
+            <RequireRole role="entrepreneur">
+              <RequireKYC>
+                <LoanRequestPage />
+              </RequireKYC>
+            </RequireRole>
+          </RequireAuth>
+        } />
+        <Route path="/loans/:id/repay" element={
+          <RequireAuth>
+            <RequireRole role="entrepreneur">
+              <RepaymentPage />
+            </RequireRole>
+          </RequireAuth>
+        } />
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
+        {/* Shared loan detail — any authenticated user */}
+        <Route path="/loans/:id" element={
+          <RequireAuth><LoanDetailPage /></RequireAuth>
+        } />
+
+        {/* Lender */}
+        <Route path="/lender" element={
+          <RequireAuth>
+            <RequireRole role="lender">
+              <LenderDashboard />
+            </RequireRole>
+          </RequireAuth>
+        } />
+
+        {/* Officer */}
+        <Route path="/officer" element={
+          <RequireAuth>
+            <RequireRole role="officer">
+              <OfficerPanel />
+            </RequireRole>
+          </RequireAuth>
+        } />
+
+        {/* Regulator */}
+        <Route path="/audit" element={
+          <RequireAuth>
+            <RequireRole role="regulator">
+              <AuditPortal />
+            </RequireRole>
+          </RequireAuth>
+        } />
+
+        {/* Credit passport — lenders, regulators, admins */}
+        <Route path="/credit-passport/:wallet" element={
+          <RequireAuth>
+            <RequireRole role={['lender', 'regulator', 'admin']}>
+              <CreditPassport />
+            </RequireRole>
+          </RequireAuth>
+        } />
+
+        {/* Default */}
+        <Route path="/"  element={<Navigate to="/login" replace />} />
+        <Route path="*"  element={<Navigate to="/login" replace />} />
+      </Routes>
+    </Suspense>
   )
 }
-
-export default App
