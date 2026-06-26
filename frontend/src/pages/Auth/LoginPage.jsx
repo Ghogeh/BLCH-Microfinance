@@ -1,37 +1,21 @@
-import { useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { useAuth } from '@contexts/AuthContext'
+import { useAuth } from '@hooks/useAuth'
 import { useWallet } from '@hooks/useWallet'
-import toast from 'react-hot-toast'
 
 export default function LoginPage() {
-  const { login } = useAuth()
-  const {
-    address,
-    signer,
-    connect,
-    isConnecting,
-    isConnected,
-    isCorrectNetwork,
-  } = useWallet()
+  const { login, isAuthenticating } = useAuth()
+  const { address, connect, isConnecting, isConnected, isCorrectNetwork } = useWallet()
 
-  const navigate   = useNavigate()
-  const location   = useLocation()
-  const from       = location.state?.from?.pathname ?? '/dashboard'
-  const [isSigning, setIsSigning] = useState(false)
+  const navigate = useNavigate()
+  const location = useLocation()
+  const from     = location.state?.from?.pathname ?? '/dashboard'
 
   const handleLogin = async () => {
-    setIsSigning(true)
     try {
-      // AuthContext.login expects (wallet, signMessage fn)
-      // signer.signMessage is the MetaMask personal_sign wrapper
-      const user = await login(address, (msg) => signer.signMessage(msg))
-      toast.success(`Welcome, ${user.name ?? user.role}`)
+      await login()
       navigate(from, { replace: true })
-    } catch (e) {
-      toast.error(e.response?.data?.message ?? e.message ?? 'Sign-in failed')
-    } finally {
-      setIsSigning(false)
+    } catch {
+      // errors are toasted inside AuthContext.login — nothing more to do here
     }
   }
 
@@ -66,10 +50,10 @@ export default function LoginPage() {
             </div>
             <button
               onClick={handleLogin}
-              disabled={isSigning || !isCorrectNetwork}
+              disabled={isAuthenticating || !isCorrectNetwork}
               className="w-full rounded-xl bg-emerald-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-emerald-500 disabled:opacity-50"
             >
-              {isSigning ? 'Signing…' : 'Sign in with MetaMask'}
+              {isAuthenticating ? 'Signing…' : 'Sign in with MetaMask'}
             </button>
           </div>
         )}
