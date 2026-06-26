@@ -268,3 +268,55 @@
 - The VITE_API_URL, VITE_LOAN_FACTORY_ADDRESS, and VITE_IDENTITY_REGISTRY_ADDRESS in frontend/.env must be set from contracts/deployments/ganache-latest.json before starting M9
 
 ---
+
+## 2026-06-24 — M9 — Agent used: Claude Sonnet 4.6
+
+**Branch:** milestone/M9-frontend-auth
+**Status change:** not_started → complete
+
+### What was done
+- Extracted IdentityRegistry, LoanFactory, LoanContract ABI arrays from Hardhat
+  artifacts into frontend/src/abi/ (IdentityRegistry.json 27 entries,
+  LoanFactory.json 20 entries, LoanContract.json 47 entries)
+- Built src/lib/api.js: Axios instance with Bearer token injected from localStorage
+  on every request via interceptor
+- Built src/hooks/useWallet.js: MetaMask detection, eth_requestAccounts, BrowserProvider
+  signer, getAddress/getNetwork, accountsChanged/chainChanged event listeners
+- Built src/contexts/WalletContext.jsx: wraps useWallet for global access
+- Built src/contexts/AuthContext.jsx: nonce→signMessage→verify 3-step login, Sanctum
+  token stored in localStorage, user rehydrated from /users/me on mount
+- Built src/components/guards/RoleGuard.jsx: loading state, unauthenticated redirect,
+  role mismatch "Access Denied" UI, KYC redirect
+- Built src/pages/Auth/LoginPage.jsx: wallet connect + sign-in flow with toast feedback
+- Built src/pages/Dashboard/DashboardPage.jsx: stub dashboard showing role/KYC/wallet
+- Rewrote src/App.jsx: QueryClientProvider + WalletProvider + AuthProvider + BrowserRouter
+  with 6 protected routes for each actor role type
+- Updated src/test/setup.js: added getNetwork() and signMessage() to BrowserProvider mock
+- Wrote 22 Vitest tests across 3 suites — all passing
+
+### Decisions made
+- AuthContext reads token from localStorage on mount and calls /users/me to rehydrate user;
+  no session cookies — all stateless Bearer token pattern for SPA/MetaMask compatibility
+- WalletContext wraps useWallet hook (not MetaMask SDK React's own provider) to keep
+  tests simple and avoid SDK's React-Native peer dependency noise
+- RoleGuard shows inline "Access Denied" UI (not a redirect) for wrong-role access so
+  users understand their role rather than silently landing on login
+- logout() silently swallows /auth/logout API errors — if the token is already expired,
+  the local state should still clear
+
+### Blockers encountered
+- @testing-library/dom was not installed (peer dep of @testing-library/react) — Fix:
+  npm install --save-dev @testing-library/dom
+- BrowserProvider mock in setup.js lacked getNetwork() — connect() call entered catch
+  block and account stayed null — Fix: added getNetwork mock returning chainId BigInt(1337)
+
+### Tests status
+- 22/22 Vitest tests passing (8 useWallet, 6 AuthContext, 8 RoleGuard)
+
+### Next session should start with
+- Begin M10 (Borrower Dashboard & Loan Request) on a new branch milestone/M10-borrower-ui
+- M10 depends on M9 ✓ and M7 ✓ (both complete)
+- Key pages: BorrowerDashboard (credit score gauge, loan cards), LoanRequestPage
+  (MetaMask createLoan call), RepaymentPage (live balance); must be responsive at 375px
+
+---

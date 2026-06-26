@@ -15,10 +15,10 @@ vi.mock('ethers', async () => {
     ...actual,
     BrowserProvider: vi.fn().mockImplementation(() => ({
       getSigner: vi.fn().mockResolvedValue({
-        getAddress: vi.fn().mockResolvedValue(
-          '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266'
-        ),
+        getAddress:  vi.fn().mockResolvedValue('0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266'),
+        signMessage: vi.fn().mockResolvedValue('0xmocksignature'),
       }),
+      getNetwork: vi.fn().mockResolvedValue({ chainId: BigInt(1337) }),
     })),
   }
 })

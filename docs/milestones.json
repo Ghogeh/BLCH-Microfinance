@@ -144,7 +144,7 @@
     {
       "id": "M9",
       "name": "Frontend: Wallet Connection & Auth",
-      "status": "not_started",
+      "status": "complete",
       "branch": "milestone/M9-frontend-auth",
       "dependsOn": ["M5"],
       "estimatedDays": [3, 4],

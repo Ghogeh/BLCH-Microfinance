@@ -159,17 +159,17 @@ syncs MySQL — this is what keeps Phase 5's tables accurate.
 ---
 
 ## M9 — Frontend: Wallet Connection & Auth
-**Status:** ⬜ Not started
+**Status:** ✅ Complete (2026-06-24)
 **Branch:** milestone/M9-frontend-auth
 **Estimated effort:** 3–4 days
 **Dependencies:** M5
 
 **Definition of Done:**
-- [ ] useWallet.js hook connects MetaMask, exposes address/chainId/signer
-- [ ] WalletContext provides global wallet state
-- [ ] AuthContext manages Sanctum token + user role
-- [ ] Role-based route guards (RequireRole component) working
-- [ ] Vitest unit tests for useWallet passing
+- [x] useWallet.js hook connects MetaMask, exposes address/chainId/signer
+- [x] WalletContext provides global wallet state
+- [x] AuthContext manages Sanctum token + user role
+- [x] Role-based route guards (RoleGuard component) working
+- [x] Vitest unit tests for useWallet, AuthContext, RoleGuard — 22/22 passing
 
 ---
 
