@@ -1,62 +1,122 @@
+import { useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { useAuth } from '@hooks/useAuth'
-import { useWallet } from '@hooks/useWallet'
+import { useWallet } from '../../hooks/useWallet'
+import { useAuth } from '../../hooks/useAuth'
+import { ROLE_CONFIG } from '../../utils/loanConfig'
+import { formatAddress } from '../../utils/formatters'
+import toast from 'react-hot-toast'
 
 export default function LoginPage() {
-  const { login, isAuthenticating } = useAuth()
-  const { address, connect, isConnecting, isConnected, isCorrectNetwork } = useWallet()
+  const { connect, isConnected, address, isConnecting, isCorrectNetwork } = useWallet()
+  const { login, isAuthenticated, user, isAuthenticating } = useAuth()
+  const navigate  = useNavigate()
+  const location  = useLocation()
 
-  const navigate = useNavigate()
-  const location = useLocation()
-  const from     = location.state?.from?.pathname ?? '/dashboard'
+  // Redirect after login based on user role
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      const from     = location.state?.from?.pathname
+      const roleHome = ROLE_CONFIG[user.role]?.home || '/dashboard'
+      navigate(from || roleHome, { replace: true })
+    }
+  }, [isAuthenticated, user]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleLogin = async () => {
+    if (!isConnected) {
+      await connect()
+      return
+    }
+    if (!isCorrectNetwork) {
+      toast.error('Please switch to the EDL network in MetaMask first.')
+      return
+    }
     try {
       await login()
-      navigate(from, { replace: true })
     } catch {
-      // errors are toasted inside AuthContext.login — nothing more to do here
+      // Error already handled inside AuthContext
     }
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-950 px-4">
-      <div className="w-full max-w-sm rounded-2xl border border-slate-800 bg-slate-900 p-8 shadow-xl">
-        <div className="mb-8 text-center">
-          <h1 className="text-2xl font-bold text-white">EDL Microfinance</h1>
-          <p className="mt-1 text-sm text-slate-400">Entrepreneurial Decentralised Ledger</p>
-          <p className="mt-3 text-xs text-slate-500">No password — your wallet is your identity</p>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
+      <div className="w-full max-w-md">
+
+        {/* Header */}
+        <div className="text-center mb-8">
+          <div className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <span className="text-white text-2xl font-bold">EDL</span>
+          </div>
+          <h1 className="text-2xl font-semibold text-gray-900">
+            Entrepreneurial Decentralised Ledger
+          </h1>
+          <p className="text-gray-500 mt-2 text-sm">
+            Blockchain microfinance for unbanked entrepreneurs
+          </p>
         </div>
 
-        {isConnected && !isCorrectNetwork && (
-          <div className="mb-4 rounded-lg bg-yellow-950/60 p-3 text-sm text-yellow-300">
-            Wrong network. Switch MetaMask to Ganache (chain ID 1337).
-          </div>
-        )}
+        {/* Login card */}
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
 
-        {!isConnected ? (
-          <button
-            onClick={connect}
-            disabled={isConnecting}
-            className="w-full rounded-xl bg-indigo-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-indigo-500 disabled:opacity-50"
-          >
-            {isConnecting ? 'Connecting…' : 'Connect MetaMask'}
-          </button>
-        ) : (
-          <div className="space-y-4">
-            <div className="rounded-lg bg-slate-800 p-3">
-              <p className="text-xs text-slate-400">Connected wallet</p>
-              <p className="mt-1 truncate font-mono text-sm text-emerald-400">{address}</p>
+          {/* Wallet status indicator */}
+          <div className="mb-6">
+            <div className="flex items-center gap-3 p-4 rounded-xl bg-gray-50 border border-gray-100">
+              <div className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${
+                isConnected && isCorrectNetwork
+                  ? 'bg-emerald-500'
+                  : isConnected
+                  ? 'bg-amber-500'
+                  : 'bg-gray-300'
+              }`} />
+              <div className="flex-1 min-w-0">
+                {isConnected ? (
+                  <>
+                    <p className="text-sm font-medium text-gray-900">
+                      {formatAddress(address)}
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      {isCorrectNetwork
+                        ? 'Connected to EDL network'
+                        : 'Wrong network — please switch'}
+                    </p>
+                  </>
+                ) : (
+                  <p className="text-sm text-gray-500">No wallet connected</p>
+                )}
+              </div>
             </div>
-            <button
-              onClick={handleLogin}
-              disabled={isAuthenticating || !isCorrectNetwork}
-              className="w-full rounded-xl bg-emerald-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-emerald-500 disabled:opacity-50"
-            >
-              {isAuthenticating ? 'Signing…' : 'Sign in with MetaMask'}
-            </button>
           </div>
-        )}
+
+          {/* Action button */}
+          <button
+            onClick={handleLogin}
+            disabled={isConnecting || isAuthenticating}
+            className="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium rounded-xl transition-colors"
+          >
+            {isConnecting      ? 'Connecting wallet…'  :
+             isAuthenticating  ? 'Signing message…'    :
+             !isConnected      ? 'Connect MetaMask'    :
+             !isCorrectNetwork ? 'Switch Network First' :
+                                 'Sign In'}
+          </button>
+
+          {/* Step-by-step help */}
+          <div className="mt-6 space-y-3">
+            {[
+              'Install MetaMask and connect your wallet',
+              'Sign a message to prove wallet ownership — no password needed',
+              'Access your role-based dashboard',
+            ].map((text, i) => (
+              <div key={i} className="flex items-start gap-3">
+                <span className="text-blue-500 text-lg mt-0.5 font-medium">{i + 1}</span>
+                <p className="text-sm text-gray-600">{text}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <p className="text-center text-xs text-gray-400 mt-4">
+          University of Bamenda · NAHPI · MSc Computer Engineering
+        </p>
       </div>
     </div>
   )
