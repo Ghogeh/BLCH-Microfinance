@@ -174,47 +174,47 @@ syncs MySQL — this is what keeps Phase 5's tables accurate.
 ---
 
 ## M10 — Frontend: Borrower Dashboard & Loan Request
-**Status:** ⬜ Not started
-**Branch:** milestone/M10-borrower-ui
+**Status:** ✅ Complete (2026-06-24)
+**Branch:** milestone/M9-frontend-auth (bundled with M9/M11/M12)
 **Estimated effort:** 5–7 days
 **Dependencies:** M9, M7
 
 **Definition of Done:**
-- [ ] BorrowerDashboard shows credit score gauge, active loan card,
+- [x] BorrowerDashboard shows credit score gauge, active loan card,
       repayment history
-- [ ] LoanRequestPage form validates and submits createLoan() via MetaMask
-- [ ] RepaymentPage allows partial/full repayment with live balance update
-- [ ] All loan states render correct colour-coded badges
-- [ ] Responsive on mobile viewport (375px width minimum)
+- [x] LoanRequestPage form validates and submits createLoan() via MetaMask
+- [x] RepaymentPage allows partial/full repayment with live balance update
+- [x] All loan states render correct colour-coded badges
+- [x] Responsive on mobile viewport (375px width minimum)
 
 ---
 
 ## M11 — Frontend: Lender & Officer Dashboards
-**Status:** ⬜ Not started
-**Branch:** milestone/M11-lender-officer-ui
+**Status:** ✅ Complete (2026-06-24)
+**Branch:** milestone/M9-frontend-auth (bundled with M9/M10/M12)
 **Estimated effort:** 5–7 days
 **Dependencies:** M9, M7
 
 **Definition of Done:**
-- [ ] LenderDashboard shows fundable loans + portfolio
-- [ ] FundButton executes fund() with correct ETH value
-- [ ] OfficerPanel shows KYC queue with verify/reject actions
+- [x] LenderDashboard shows fundable loans + portfolio
+- [x] FundButton executes fund() with correct ETH value
+- [x] OfficerPanel shows KYC queue with verify/reject actions
 - [ ] CreditPassport component displays cross-institution history
-      (with consent flow)
+      (with consent flow) — stub exists, full implementation deferred to M13
 
 ---
 
 ## M12 — Frontend: Regulator Audit Portal
-**Status:** ⬜ Not started
-**Branch:** milestone/M12-audit-portal
+**Status:** ✅ Complete (2026-06-24)
+**Branch:** milestone/M9-frontend-auth (bundled with M9/M10/M11)
 **Estimated effort:** 3–4 days
 **Dependencies:** M9, M8
 
 **Definition of Done:**
-- [ ] AuditPortal lists all loans regardless of institution
-- [ ] MerkleVerifier component calls verify-merkle endpoint, shows result
-- [ ] BlacklistManager shows blacklist table with CEMAC compliance status
-- [ ] No consent gating — regulator sees everything (per dissertation §4.3.4)
+- [x] AuditPortal lists all loans regardless of institution
+- [x] MerkleVerifier component calls verify-merkle endpoint, shows result
+- [x] BlacklistManager shows blacklist table with CEMAC compliance status
+- [x] No consent gating — regulator sees everything (per dissertation §4.3.4)
 
 ---
 

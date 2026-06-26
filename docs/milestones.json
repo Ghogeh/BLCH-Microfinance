@@ -158,7 +158,7 @@
     {
       "id": "M10",
       "name": "Frontend: Borrower Dashboard & Loan Request",
-      "status": "not_started",
+      "status": "complete",
       "branch": "milestone/M10-borrower-ui",
       "dependsOn": ["M9", "M7"],
       "estimatedDays": [5, 7],
@@ -172,7 +172,7 @@
     {
       "id": "M11",
       "name": "Frontend: Lender & Officer Dashboards",
-      "status": "not_started",
+      "status": "complete",
       "branch": "milestone/M11-lender-officer-ui",
       "dependsOn": ["M9", "M7"],
       "estimatedDays": [5, 7],
@@ -186,7 +186,7 @@
     {
       "id": "M12",
       "name": "Frontend: Regulator Audit Portal",
-      "status": "not_started",
+      "status": "complete",
       "branch": "milestone/M12-audit-portal",
       "dependsOn": ["M9", "M8"],
       "estimatedDays": [3, 4],

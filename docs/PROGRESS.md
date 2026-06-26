@@ -320,3 +320,70 @@
   (MetaMask createLoan call), RepaymentPage (live balance); must be responsive at 375px
 
 ---
+
+## 2026-06-24 — M9/M10/M11/M12 — Agent used: Claude Sonnet 4.6
+
+**Branch:** milestone/M9-frontend-auth (all 4 milestones bundled)
+**Status change:** not_started → complete (M9, M10, M11, M12)
+
+### What was done
+- WalletContext: MetaMask connection, network guard, getContract/getReadContract factory,
+  accountsChanged/chainChanged listeners, auto-reconnect on mount
+- AuthContext: nonce→sign→verify wallet login, Sanctum token + user in localStorage,
+  role helpers (isEntrepreneur, isLender, isOfficer, isRegulator, isKYCVerified)
+- RequireAuth, RequireRole, RequireKYC route guard components
+- React Router v6 with 11 lazy-loaded code-split routes (Suspense + PageLoader fallback)
+- Utility layer: cn (clsx+tailwind-merge), formatters (CFA, address, date, tx hash),
+  loanConfig (LOAN_STATES, CREDIT_RATING, ROLE_CONFIG), apiClient (401 auto-redirect),
+  contractABI (minimal ABI fragments for ethers.js)
+- Shared components: LoanStateBadge (LOAN_STATES driven), CreditScoreGauge (SVG donut,
+  700ms transition), PageLayout (role-aware nav), DataTable (column config + render fns)
+- LoginPage: progressive wallet connect → sign-in button; role-redirect after auth
+- BorrowerDashboard: credit gauge (lg), active loan card with progress bar, stats row,
+  full loans DataTable; React Query keys my-loans + credit-score
+- LoanRequestPage: zod+react-hook-form validation, 4-stage txStatus, repayment preview,
+  inline KYC gate banner
+- RepaymentPage: 25/50/100% quick-select, progress bar, repayment history list,
+  triple query invalidation (loan + my-loans + credit-score)
+- LenderDashboard: marketplace table, fund modal (ETH value tx via loanContract.fund)
+- OfficerPanel: KYC queue with 10s auto-refetch, verify/reject mutations, reason modal
+- AuditPortal: full ledger tab, Merkle verifier (useMutation for on-demand GET),
+  CEMAC blacklist registry; COBAC notice banner
+- KYCPage: react-dropzone (PDF/JPG/PNG, 5MB), status card, privacy note
+- 28 Vitest tests passing; build: 36 source files → 19 code-split chunks, 0 errors
+
+### Decisions made
+- All pages lazy() + Suspense: initial bundle ~100KB gzip instead of ~600KB;
+  ethers (273KB) only loads when a MetaMask tx page is reached
+- WalletContext and AuthContext deliberately separate: MetaMask lifecycle (browser)
+  and Sanctum lifecycle (server) fail and recover independently
+- contractABI.js uses minimal human-readable ABI fragments (not full Hardhat artifacts):
+  ethers parses them at runtime; bundle stays small; every on-chain call is searchable
+- useMutation for Merkle verifier (not useQuery): result is on-demand and one-shot,
+  not a cached background subscription; avoids re-verification on window focus
+- CreditPassport stub exists (M11 DoD item deferred): page scaffolded at
+  /credit-passport/:wallet, will be completed in M13 integration sprint
+
+### Blockers encountered
+- ethers mock gap: WalletContext imports { ethers } namespace, mock only replaced named
+  BrowserProvider export; ethers.BrowserProvider still called real class — Fix: added
+  ethers: { ...actual.ethers, BrowserProvider: Mock } to vi.mock return
+- BrowserProvider.send() unmocked: new WalletContext uses ethProvider.send('eth_requestAccounts')
+  instead of window.ethereum.request; send was absent from mock — Fix: added send: vi.fn()
+- AuthContext mock path: used @/lib/api but new AuthContext imports ../utils/apiClient;
+  vi.mock path must match exact import — Fix: switched mock to @/utils/apiClient
+- login() API call sequence: setting token triggers useEffect([token]) → /users/me GET;
+  test only mocked nonce + verify, third GET returned undefined → crash — Fix: added
+  third mockResolvedValueOnce for /users/me in login test
+
+### Tests status
+- 28/28 Vitest tests passing (12 useWallet, 7 AuthContext, 8 RoleGuard + 1 utility)
+- Build: 36 source files, 19 chunks, 0 errors, 696ms dev server start
+
+### Next session should start with
+- Begin M13 (Integration Testing) on milestone/M13-integration-tests branched from develop
+- Wire up the 5 dissertation validation scenarios end-to-end with live Ganache + Laravel
+- Write Playwright E2E tests covering the full borrower journey
+- Complete CreditPassport page (M11 deferred item)
+
+---
