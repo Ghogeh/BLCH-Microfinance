@@ -1,9 +1,9 @@
 require("@nomicfoundation/hardhat-toolbox");
 
-// Ganache account [0] for mnemonic "test test test...junk" (m/44'/60'/0'/0 derivation)
-// Address: 0x90F8bf6A479f320ead074411a4B0e7944Ea8c9C1
+// Ganache account [0] for mnemonic "test test test...junk" (m/44'/60'/0'/0/{index} path)
+// Address: 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266
 const PRIVATE_KEY = process.env.ADMIN_PRIVATE_KEY ||
-  "0x4f3edf983ac636a65a842ce7c78d9aa706d3b113bce9c46f30d7d21715b23b1d";
+  "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80";
 
 module.exports = {
   solidity: {

@@ -1,0 +1,178 @@
+version: '3.9'
+
+# EDL Microfinance System — Complete Docker Compose
+# University of Bamenda, NAHPI — MSc Computer Engineering
+# Run:  docker-compose up --build
+# Stop: docker-compose down
+
+services:
+
+  # ── MySQL 8.0 ──────────────────────────────────────────────────────────────
+  mysql:
+    image: mysql:8.0
+    container_name: edl-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE:      edl_db
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-edl_secret_2025}
+      MYSQL_CHARACTER_SET: utf8mb4
+      MYSQL_COLLATION:     utf8mb4_unicode_ci
+    volumes:
+      - mysql_data:/var/lib/mysql
+    ports:
+      - "3306:3306"
+    healthcheck:
+      test:     ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout:  5s
+      retries:  5
+    networks:
+      - edl-network
+
+  # ── Redis ──────────────────────────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: edl-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test:     ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout:  5s
+      retries:  5
+    networks:
+      - edl-network
+
+  # ── Ganache (local blockchain dev node) ───────────────────────────────────
+  ganache:
+    image: trufflesuite/ganache:latest
+    container_name: edl-ganache
+    restart: unless-stopped
+    command: >
+      --deterministic
+      --mnemonic "test test test test test test test test test test test junk"
+      --port 8545
+      --chain.chainId 1337
+      --accounts 10
+      --host 0.0.0.0
+    ports:
+      - "8545:8545"
+    healthcheck:
+      test:     ["CMD", "wget", "-q", "--spider", "http://localhost:8545"]
+      interval: 10s
+      timeout:  5s
+      retries:  5
+    networks:
+      - edl-network
+
+  # ── Laravel Backend ────────────────────────────────────────────────────────
+  backend:
+    build:
+      context:    ./backend
+      dockerfile: Dockerfile
+    container_name: edl-backend
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      ganache:
+        condition: service_healthy
+    environment:
+      APP_ENV:                   production
+      APP_KEY:                   ${APP_KEY}
+      DB_HOST:                   mysql
+      DB_DATABASE:               edl_db
+      DB_USERNAME:               root
+      DB_PASSWORD:               ${DB_PASSWORD:-edl_secret_2025}
+      CACHE_STORE:               redis
+      QUEUE_CONNECTION:          redis
+      REDIS_HOST:                redis
+      BLOCKCHAIN_RPC_URL:        http://ganache:8545
+      IDENTITY_REGISTRY_ADDRESS: ${IDENTITY_REGISTRY_ADDRESS}
+      EDL_ACCESS_CONTROL_ADDRESS: ${EDL_ACCESS_CONTROL_ADDRESS}
+      LOAN_FACTORY_ADDRESS:      ${LOAN_FACTORY_ADDRESS}
+      ADMIN_PRIVATE_KEY:         ${ADMIN_PRIVATE_KEY}
+    ports:
+      - "8000:8000"
+    networks:
+      - edl-network
+
+  # ── Laravel Queue Worker (processes blockchain events) ────────────────────
+  queue-worker:
+    build:
+      context:    ./backend
+      dockerfile: Dockerfile
+    container_name: edl-queue-worker
+    restart: unless-stopped
+    command: php artisan queue:work --queue=blockchain-events --sleep=3 --tries=3
+    depends_on:
+      - backend
+    environment:
+      APP_ENV:            production
+      APP_KEY:            ${APP_KEY}
+      DB_HOST:            mysql
+      DB_DATABASE:        edl_db
+      DB_USERNAME:        root
+      DB_PASSWORD:        ${DB_PASSWORD:-edl_secret_2025}
+      QUEUE_CONNECTION:   redis
+      REDIS_HOST:         redis
+      BLOCKCHAIN_RPC_URL: http://ganache:8545
+    networks:
+      - edl-network
+
+  # ── Blockchain Event Listener ──────────────────────────────────────────────
+  blockchain-listener:
+    build:
+      context:    ./backend
+      dockerfile: Dockerfile
+    container_name: edl-blockchain-listener
+    restart: unless-stopped
+    command: php artisan edl:listen
+    depends_on:
+      - backend
+      - ganache
+    environment:
+      APP_ENV:                   production
+      APP_KEY:                   ${APP_KEY}
+      DB_HOST:                   mysql
+      DB_DATABASE:               edl_db
+      DB_USERNAME:               root
+      DB_PASSWORD:               ${DB_PASSWORD:-edl_secret_2025}
+      QUEUE_CONNECTION:          redis
+      REDIS_HOST:                redis
+      BLOCKCHAIN_RPC_URL:        http://ganache:8545
+      IDENTITY_REGISTRY_ADDRESS: ${IDENTITY_REGISTRY_ADDRESS}
+      LOAN_FACTORY_ADDRESS:      ${LOAN_FACTORY_ADDRESS}
+    networks:
+      - edl-network
+
+  # ── React Frontend (served by Nginx) ──────────────────────────────────────
+  frontend:
+    build:
+      context:    ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL:                   http://localhost:8000/api
+        VITE_CHAIN_ID:                  "1337"
+        VITE_RPC_URL:                   http://localhost:8545
+        VITE_IDENTITY_REGISTRY_ADDRESS: ${IDENTITY_REGISTRY_ADDRESS}
+        VITE_LOAN_FACTORY_ADDRESS:      ${LOAN_FACTORY_ADDRESS}
+    container_name: edl-frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "3000:80"
+    networks:
+      - edl-network
+
+networks:
+  edl-network:
+    driver: bridge
+
+volumes:
+  mysql_data:
+    driver: local

@@ -199,7 +199,7 @@
     {
       "id": "M13",
       "name": "Integration Testing & Bug Fixes",
-      "status": "not_started",
+      "status": "complete",
       "branch": "milestone/M13-integration-tests",
       "dependsOn": ["M2","M3","M4","M5","M6","M7","M8","M9","M10","M11","M12"],
       "estimatedDays": [5, 7],
@@ -213,7 +213,7 @@
     {
       "id": "M14",
       "name": "Deployment (Docker + Documentation)",
-      "status": "not_started",
+      "status": "complete",
       "branch": "milestone/M14-deployment",
       "dependsOn": ["M13"],
       "estimatedDays": [3, 5],

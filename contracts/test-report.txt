@@ -1,0 +1,198 @@
+
+  EDLAccessControl
+    Deployment
+      ✔ grants ADMIN and DEFAULT_ADMIN_ROLE to the admin wallet
+    assignRole — non-regulator roles require KYC
+      ✔ reverts if the wallet is not yet KYC-verified
+      ✔ succeeds once the wallet is KYC-verified in IdentityRegistry
+      ✔ reverts if the wallet is blacklisted, even if previously verified
+    assignRole — regulator exemption
+      ✔ allows REGULATOR role WITHOUT requiring standard KYC verification
+      ✔ STILL reverts the regulator exemption if the wallet is blacklisted
+      ✔ does NOT grant the KYC exemption to any role other than REGULATOR
+    Authorization boundaries
+      ✔ reverts when a non-ADMIN wallet tries to assign a role
+      ✔ allows ADMIN to revoke a previously assigned role
+    hasValidRole
+      ✔ returns true only when role + KYC verified + not blacklisted all hold
+      ✔ returns false if the role was granted but the wallet is later blacklisted
+
+  IdentityRegistry
+    Deployment
+      ✔ sets the deployer as owner
+      ✔ grants isOfficer to the deployer by default
+    setOfficer
+      ✔ owner can grant officer status to a wallet
+      ✔ owner can revoke officer status
+      ✔ non-owner cannot grant officer status
+    setAuthorizedContract
+      ✔ owner can authorize a contract address
+      ✔ authorized contract can call blacklistAddress()
+      ✔ non-owner cannot set authorized contract
+    registerIdentity
+      ✔ registers a new identity with Pending status
+      ✔ reverts if wallet tries to register twice
+      ✔ reverts if wallet is blacklisted
+    verifyIdentity
+      ✔ officer can verify a Pending identity
+      ✔ reverts if identity is not in Pending state
+      ✔ non-officer cannot verify an identity
+    rejectIdentity
+      ✔ officer can reject a Pending identity with a reason
+      ✔ reverts if identity is not in Pending state
+    blacklistAddress / unblacklistAddress
+      ✔ owner can blacklist a wallet
+      ✔ owner can unblacklist a wallet
+      ✔ non-owner cannot blacklist
+      ✔ non-owner cannot unblacklist
+    isVerified
+      ✔ returns true for a verified, non-blacklisted wallet
+      ✔ returns false for a pending wallet
+      ✔ returns false for a verified but blacklisted wallet
+      ✔ returns false for an unregistered wallet
+    getIdentity
+      ✔ returns full Identity struct for a registered wallet
+      ✔ returns zero-value struct for unregistered wallet
+
+  LoanContract
+    Constructor
+      ✔ reverts if borrower is not KYC verified
+      ✔ reverts if borrower is blacklisted
+      ✔ initialises state as OPEN
+      ✔ sets remainingBalance to loanAmount + interest
+      ✔ sets initial reputationScore to 50
+      ✔ emits LoanCreated on the deployed LoanContract
+    provideGuarantee
+      ✔ allows a KYC-verified non-borrower to guarantee the loan
+      ✔ transitions state from OPEN to FUNDING on first guarantee
+      ✔ reverts if the borrower tries to guarantee their own loan
+      ✔ reverts if guarantor is not KYC verified
+      ✔ second provideGuarantee attempt is blocked by state machine (OPEN→FUNDING)
+      ✔ reverts in wrong state (e.g. ACTIVE)
+    fund
+      ✔ reverts in OPEN state — guarantee must be provided first
+      ✔ reverts if msg.value is zero
+      ✔ reverts if the borrower tries to fund their own loan
+      ✔ emits Funded event with correct parameters
+      ✔ automatically disburses when totalFunded reaches loanAmount
+      ✔ transitions state to ACTIVE after successful disbursement
+      ✔ transfers exactly loanAmount to the borrower wallet
+    repay
+      ✔ reverts from a non-borrower address
+      ✔ reverts if msg.value is zero
+      ✔ reverts if repayment amount exceeds remaining balance
+      ✔ reduces remainingBalance by the payment amount
+      ✔ emits RepaymentMade with correct parameters
+      ✔ emits ReputationUpdated after each repayment
+      ✔ increases reputationScore above base 50 after on-time payment
+      ✔ transitions to REPAID when remainingBalance reaches zero
+      ✔ appends a RepaymentEntry to repaymentHistory on each payment
+    checkDefault
+      ✔ reverts if the loan is not yet overdue
+      ✔ reverts in OPEN state
+      ✔ transitions to DEFAULTED when overdue with balance remaining
+      ✔ emits DefaultDeclared with correct days overdue
+      ✔ does NOT trigger blacklist if overdue by less than 90 days
+      ✔ CEMAC 2026: triggers blacklist via LoanFactory at 90+ days overdue
+      ✔ CEMAC: blacklisted borrower immediately fails isVerified check
+    Credit passport — consent management
+      ✔ reverts getRepaymentHistory without lender consent
+      ✔ allows lender to read history after borrower grants access
+      ✔ reverts getRepaymentHistory after consent is revoked
+      ✔ regulator reads history without any consent from borrower
+      ✔ stranger cannot call getRepaymentHistoryRegulator
+    Reentrancy protection on fund()
+      ✔ nonReentrant prevents double-disbursement via malicious borrower
+    Admin controls
+      ✔ admin can pause the contract
+      ✔ admin can unpause and normal operations resume
+      ✔ non-admin cannot pause the contract
+    triggerRegulatoryPenalty — regulator manual CEMAC action
+      ✔ regulator can manually trigger penalty on an ACTIVE loan
+      ✔ triggerRegulatoryPenalty also blacklists the borrower via factory
+      ✔ non-regulator cannot call triggerRegulatoryPenalty
+    hasLenderAccess view function
+      ✔ returns false before consent is granted
+      ✔ returns true after borrower grants consent
+      ✔ returns false after consent is revoked
+    Credit score — late payment branch
+      ✔ reputationScore reflects lower timeliness when repayment is made after due date
+    getGuarantors view function
+      ✔ returns the list of guarantors after guarantee is provided
+
+  LoanFactory
+    Deployment
+      ✔ stores the correct registry and acl addresses
+      ✔ starts with zero loans
+    createLoan
+      ✔ reverts if the caller is not KYC verified
+      ✔ reverts if the caller is blacklisted
+      ✔ reverts if amount is zero
+      ✔ reverts if duration is zero
+      ✔ reverts if interest rate exceeds 30%
+      ✔ deploys a LoanContract and emits LoanContractDeployed
+      ✔ registers the deployed loan in allLoans and isDeployedLoan
+      ✔ adds the loan to borrowerLoans for the caller
+      ✔ deployed LoanContract has correct borrower and loanAmount
+    requestBlacklist
+      ✔ reverts when called by an address that is not a deployed loan
+      ✔ reverts when called by the factory owner (not a deployed loan)
+    View functions
+      ✔ getLoan reverts on out-of-bounds index
+      ✔ getBorrowerLoans returns empty array for unknown borrower
+      ✔ getAllLoans returns all deployed loan addresses
+
+  RBACModifiers (via RBACTestHarness)
+    ✔ onlyEntrepreneur: allows a verified entrepreneur through
+    ✔ onlyEntrepreneur: rejects a wallet with no role at all
+    ✔ onlyEntrepreneur: rejects an entrepreneur who has since been blacklisted
+    ✔ onlyLender: rejects an entrepreneur trying to call a lender-only action
+    ✔ onlyRegulator: allows a regulator through WITHOUT requiring KYC
+    ✔ onlyAdmin: allows the admin wallet through
+    ✔ onlyAdmin: rejects a verified entrepreneur (no privilege escalation)
+    ✔ onlyConsortiumMember: allows any of the six roles through
+    ✔ onlyConsortiumMember: rejects a wallet with no role assigned at all
+
+  Scenario 1: Entrepreneur Onboarding and Loan Request Processing
+    ✔ Phase 1: Entrepreneur registers a decentralised identity (DID) on-chain
+    ✔ Phase 2: MFI Officer verifies KYC — status transitions Pending → Verified
+    ✔ Phase 3: Non-verified borrower is BLOCKED from creating a loan
+    ✔ Phase 4: Verified entrepreneur creates loan — state is OPEN, LoanContractDeployed emitted
+    ✔ Phase 5: Peer guarantee transitions state OPEN → FUNDING
+    ✔ Phase 6: Lender funds loan — auto-disbursement fires, state → ACTIVE
+    ✔ FULL SCENARIO 1: Complete onboarding flow from DID registration to active disbursed loan
+
+  Scenario 2: Atomic Repayment Tracking and Dynamic Credit Scoring
+    ✔ Repayment reduces remainingBalance by exact payment amount
+    ✔ RepaymentMade and ReputationUpdated emitted in the SAME transaction (atomicity)
+    ✔ ReputationScore increases above baseline 50 after on-time payment
+    ✔ RepaymentEntry appended to repaymentHistory — portable credit record
+    ✔ Final repayment transitions state ACTIVE → REPAID in the same tx
+    ✔ Credit score is higher after on-time payments vs late payments
+    ✔ FULL SCENARIO 2: Three-instalment repayment with progressive credit improvement
+
+  Scenario 3: Cross-Institutional Forensic Auditing and CEMAC 2026 Compliance
+    ✔ COBAC reads loan history WITHOUT borrower consent (zero-gas view call)
+    ✔ Regulator audits repayment history across TWO institution loans in one session
+    ✔ Non-regulator wallet is BLOCKED from getRepaymentHistoryRegulator
+    ✔ CEMAC 2026: 90-day overdue default triggers automatic on-chain blacklisting
+    ✔ CEMAC: Blacklisted borrower is BLOCKED from new loan across the entire consortium
+    ✔ FULL SCENARIO 3: COBAC detects over-indebtedness across two MFIs in one audit
+
+  Scenario 4: Multi-Lender Crowdfunding
+    ✔ Three partial contributions escrow correctly before threshold
+    ✔ Third contribution crosses threshold — auto-disburse fires, state → ACTIVE
+    ✔ Overfunding: only loanAmount disbursed — excess stays in contract
+    ✔ FULL SCENARIO 4: Two-lender crowdfund, full repayment cycle
+
+  Scenario 5: Default Handling and Regulatory Enforcement
+    ✔ checkDefault reverts before due date
+    ✔ checkDefault transitions ACTIVE → DEFAULTED after due date (< 90 days = no blacklist)
+    ✔ 90-day overdue default triggers CEMAC blacklist via factory callback
+    ✔ Any consortium member can call checkDefault — not just the lender
+    ✔ Regulator can manually trigger CEMAC penalty on ACTIVE loan (before 90-day auto)
+    ✔ FULL SCENARIO 5: Default → CEMAC blacklist → blocked from new loan network-wide
+
+
+  144 passing (5s)
+
