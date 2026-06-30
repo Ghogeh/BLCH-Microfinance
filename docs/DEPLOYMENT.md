@@ -83,7 +83,7 @@ Output: three contract addresses. Copy them into:
 - `backend/.env`  — `IDENTITY_REGISTRY_ADDRESS`, `EDL_ACCESS_CONTROL_ADDRESS`, `LOAN_FACTORY_ADDRESS`
 - `frontend/.env` — `VITE_IDENTITY_REGISTRY_ADDRESS`, `VITE_LOAN_FACTORY_ADDRESS`
 
-The addresses are also saved automatically to `contracts/deployments/ganache-latest.json`.
+Addresses are also saved to `contracts/deployments/ganache-latest.json`.
 
 ### Terminal 3 — Laravel Backend
 
@@ -92,7 +92,7 @@ cd backend
 composer install          # first time only
 cp .env.example .env
 php artisan key:generate
-# Edit .env — add contract addresses, DB credentials (see reference below)
+# Edit .env — add contract addresses and DB credentials
 php artisan migrate --seed
 php artisan serve --port=8000
 ```
@@ -115,7 +115,7 @@ Both must be running for loan state to update automatically.
 cd frontend
 npm install         # first time only
 cp .env.example .env
-# Edit .env — add API URL and contract addresses (see reference below)
+# Edit .env — add API URL and contract addresses
 npm run dev
 ```
 
@@ -128,158 +128,146 @@ Browser: http://localhost:5173 (Vite dev server with HMR)
 ### backend/.env
 
 ```ini
-# Application
 APP_NAME=EDL-Microfinance
-APP_ENV=local
-APP_KEY=                        # php artisan key:generate
-APP_DEBUG=true
-APP_URL=http://localhost:8000
 
-# Database
+APP_KEY=base64:...       # generate with: php artisan key:generate
+
+APP_URL=http://localhost:8000
 DB_CONNECTION=mysql
+
 DB_HOST=127.0.0.1
 DB_PORT=3306
 DB_DATABASE=edl_db
 DB_USERNAME=root
 DB_PASSWORD=
 
-# Cache & Queue (Redis)
 CACHE_STORE=redis
 QUEUE_CONNECTION=redis
 REDIS_HOST=127.0.0.1
-REDIS_PORT=6379
 
-# Blockchain (from contracts/deployments/ganache-latest.json)
 BLOCKCHAIN_RPC_URL=http://127.0.0.1:8545
-IDENTITY_REGISTRY_ADDRESS=0x...
-EDL_ACCESS_CONTROL_ADDRESS=0x...
-LOAN_FACTORY_ADDRESS=0x...
 
-# Admin wallet (Ganache Account[0] — NEVER commit real keys)
-ADMIN_PRIVATE_KEY=0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80
+IDENTITY_REGISTRY_ADDRESS=0x...   # from deploy-all.js output
+EDL_ACCESS_CONTROL_ADDRESS=0x...  # from deploy-all.js output
+LOAN_FACTORY_ADDRESS=0x...        # from deploy-all.js output
+
+ADMIN_PRIVATE_KEY=0xac0974...     # Ganache Account[0] private key
 ```
 
 ### frontend/.env
 
 ```ini
 VITE_API_URL=http://localhost:8000/api
+
 VITE_CHAIN_ID=1337
 VITE_RPC_URL=http://127.0.0.1:8545
 
-# From contracts/deployments/ganache-latest.json
 VITE_IDENTITY_REGISTRY_ADDRESS=0x...
 VITE_LOAN_FACTORY_ADDRESS=0x...
 ```
 
 ---
 
-## Test Accounts (Ganache deterministic)
+## Test Accounts (Ganache Deterministic)
 
-All accounts are pre-funded with 1000 ETH on the local Ganache node.  
-Mnemonic: `test test test test test test test test test test test junk`
+Mnemonic: `test test test test test test test test test test test junk`  
+All accounts pre-funded with 1,000 ETH.
 
-| Index | Address | Suggested Role |
-|---|---|---|
-| [0] | `0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266` | Admin / Contract Deployer |
-| [1] | `0x70997970C51812dc3A010C7d01b50e0d17dc79C8` | MFI Officer |
-| [2] | `0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC` | Entrepreneur (borrower) |
-| [3] | `0x90F79bf6EB2c4f870365E785982E1f101E93b906` | Guarantor |
-| [4] | `0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65` | Lender (MFI/SACCO) |
-| [5] | `0x9965507D1a55bcC2695C58ba16FB37d819B0A4dc` | Regulator (COBAC node) |
+| Account | Suggested Role | Address | Private Key |
+|---|---|---|---|
+| Account[0] | Admin / Deployer | `0xf39Fd6e5...` | `0xac0974be...` |
+| Account[1] | Entrepreneur | `0x70997970...` | `0x59c6995e...` |
+| Account[2] | Lender | `0x3C44CdDd...` | `0x5de4111a...` |
+| Account[3] | MFI Officer | `0x90F79bf6...` | `0x7c852118...` |
+| Account[4] | Regulator (COBAC) | `0x15d34AAf...` | `0x47e179ec...` |
+| Account[5] | Guarantor | `0x9965507D...` | `0x8b3a350c...` |
 
-**MetaMask setup:** Import any account using its private key. Switch network to
-Ganache (RPC: `http://127.0.0.1:8545`, Chain ID: `1337`).
+Add accounts to MetaMask by importing the private keys.  
+**These are public test keys — never use on mainnet.**
+
+Full private keys available in Ganache startup output or `contracts/hardhat.config.js`.
 
 ---
 
-## Running the Test Suites
+## MetaMask Configuration
 
-### Smart Contract Tests (Hardhat)
+1. Open MetaMask → Networks → Add Network (manually)
+2. **Network Name:** EDL Ganache
+3. **RPC URL:** `http://127.0.0.1:8545`
+4. **Chain ID:** `1337`
+5. **Currency Symbol:** `ETH`
+6. Import test accounts using private keys from the table above
 
-```bash
-cd contracts
-npx hardhat test              # all 144 tests
-npx hardhat coverage          # coverage report
-```
+---
 
-Expected: 144 tests passing, ~97% statement coverage.
-
-### Backend Tests (PHPUnit / Laravel)
-
-```bash
-cd backend
-php artisan test              # all 27 tests
-php artisan test --filter Auth  # subset
-```
-
-Expected: 27 tests passing, 55 assertions.  
-**Requires:** MySQL running with `edl_db` and `edl_db_test` databases.
-
-### Frontend Tests (Vitest)
+## Running Tests
 
 ```bash
-cd frontend
-npm run test                  # all 46 tests
-npm run coverage              # with coverage report
-```
+# Smart contract unit tests + all 5 dissertation scenarios (144 tests)
+cd contracts && npx hardhat test
 
-Expected: 46 tests passing across 6 test files.
+# Smart contract coverage report
+cd contracts && npx hardhat coverage
+
+# Backend API integration tests (27 tests)
+cd backend && php artisan test
+
+# Frontend unit tests (46 tests)
+cd frontend && npm run test
+
+# Full test report — save to file for dissertation appendix
+cd contracts && npx hardhat test 2>&1 | tee test-report.txt
+```
 
 ---
 
 ## Dissertation Validation Scenarios
 
-After the full system is running, verify all 5 dissertation scenarios manually:
-
-| Scenario | Description | Smart contract tests |
-|---|---|---|
-| §4.5.1 | Entrepreneur onboarding and loan creation | Scenario1_OnboardingLoanRequest.test.js |
-| §4.5.2 | Atomic repayment and credit score update | Scenario2_RepaymentCreditScoring.test.js |
-| §4.5.3 | COBAC forensic audit without institutional cooperation | Scenario3_RegulatoryAuditCEMAC.test.js |
-| §3.4.3 (Step 3) | Multi-lender crowdfunding and escrow | Scenario4and5_CrowdfundingDefault.test.js |
-| §3.4.3 (Step 6) | 90-day default, CEMAC blacklisting, network block | Scenario4and5_CrowdfundingDefault.test.js |
-
-Run all scenario tests:
-
-```bash
-cd contracts
-npx hardhat test  # includes all scenario files
-```
+| # | Reference | Description | Test File |
+|---|---|---|---|
+| 1 | §4.5.1 | Entrepreneur onboarding and loan creation | `Scenario1_OnboardingLoanRequest.test.js` |
+| 2 | §4.5.2 | Atomic repayment and credit score update | `Scenario2_RepaymentCreditScoring.test.js` |
+| 3 | §4.5.3 | COBAC forensic audit, no institutional cooperation | `Scenario3_RegulatoryAuditCEMAC.test.js` |
+| 4 | §3.4.3 Step 3 | Multi-lender crowdfunding and escrow disbursement | `Scenario4and5_CrowdfundingDefault.test.js` |
+| 5 | §3.4.3 Step 6 | 90-day default, CEMAC blacklisting, network block | `Scenario4and5_CrowdfundingDefault.test.js` |
 
 ---
 
-## Troubleshooting
+## Common Issues
 
-### Ganache accounts are different on each restart
+**"Ganache connection refused"**  
+→ Start Ganache in Terminal 1 before anything else.
 
-Ganache with `--mnemonic` always produces the same 10 accounts.
-If the addresses look different, you are missing the `--mnemonic` flag.
-The mnemonic is: `test test test test test test test test test test test junk`
+**"Contract addresses not found in .env"**  
+→ Run `deploy-all.js` and copy the output addresses to both `.env` files.
 
-### "borrower not KYC verified" when contract addresses changed
+**"MetaMask: wrong network"**  
+→ Switch MetaMask to the EDL Ganache network (Chain ID: 1337).
 
-Every fresh Ganache restart deploys contracts at new addresses.
-You must re-run `deploy-all.js` and update both `.env` files after each restart.
+**`php artisan migrate` fails**  
+→ Ensure MySQL is running and `edl_db` database exists.  
+→ Create it: `mysql -u root -e "CREATE DATABASE edl_db;"`
 
-### Laravel 401 on all API requests
+**"Event listener not syncing"**  
+→ Ensure both `php artisan queue:work` AND `php artisan edl:listen` are running.  
+→ Check Redis: `redis-cli ping` should return `PONG`.
 
-The Sanctum token expires when the backend restarts because the `APP_KEY` generates
-fresh encryption. If tokens stop working, log out in MetaMask and sign in again.
+**"borrower not KYC verified" error after Ganache restart**  
+→ Contracts are reset on every Ganache restart. Re-run `deploy-all.js` and update both `.env` files.
 
-### `php artisan edl:listen` shows no events
+---
 
-Verify:
-1. Ganache is running and contracts are deployed at the addresses in `backend/.env`
-2. Redis is running (`redis-cli ping` → `PONG`)
-3. The queue worker is running in a separate terminal
+## Production Notes (Hyperledger Besu)
 
-### MetaMask "Wrong Network" on login
+For production deployment on Hyperledger Besu PoA:
 
-MetaMask must be on Ganache's network. Add it manually:
-- Network name: `EDL Ganache`
-- RPC URL: `http://127.0.0.1:8545`
-- Chain ID: `1337`
-- Currency: `ETH`
+1. Replace Ganache with Besu in `hardhat.config.js` networks section
+2. Update `BLOCKCHAIN_RPC_URL` to the Besu node RPC endpoint
+3. Replace the `ganache` service in `docker-compose.yml` with the Besu container
+4. All smart contracts deploy identically to Besu — no Solidity changes required
+5. Gas costs approach zero on PoA consensus — NFR-007 cost target maintained
+
+Besu configuration reference: `blockchain/besu-config/` (M14 extension)
 
 ---
 
@@ -302,24 +290,10 @@ edl-microfinance/
 │   ├── src/pages/          10 role-specific pages
 │   └── src/test/           46 Vitest unit tests
 ├── docker-compose.yml      7-service Docker stack
-├── scripts/                docker-start.sh
+├── scripts/                docker-start.sh (automated startup)
 └── docs/                   MILESTONES.md, PROGRESS.md, engineering journals
 ```
 
 ---
 
-## Key Architecture Decisions
-
-| Decision | Rationale |
-|---|---|
-| Permissioned Ganache (dev) / Besu (prod) | Cost-free testing; Besu for production CEMAC compliance |
-| Laravel Sanctum (not JWT) | SPA-native, stateless Bearer token, zero external dependency |
-| SHA-256 hash on-chain only | KYC documents stay off-chain (GDPR/CEMAC data protection) |
-| Nonce challenge for auth | Eliminates password storage; ECDSA signature proves wallet ownership |
-| React Query for data fetching | Automatic cache invalidation on mutation; credit score updates live |
-| Minimal ABI fragments (not full artifacts) | Reduces frontend bundle by ~60 KB; all on-chain calls searchable in one file |
-| `provideGuarantee()` open to any verified wallet | Flexible peer guarantee model matches informal CEMAC savings group structure |
-
----
-
-*Generated: 2026-06-30 | EDL Microfinance v1.0 | Milestone M14 complete*
+*Generated: 2026-06-30 | EDL Microfinance v1.0 | MSc Computer Engineering | University of Bamenda, NAHPI*
